@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import DemoLayout from '../../components/DemoLayout'
 import AnimatedReveal from '../../components/AnimatedReveal'
 import {
@@ -382,7 +382,7 @@ function ConsistencyTab() {
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
             Consistency Issues ({consistencyFlags.length})
           </h3>
-          {consistencyFlags.map((flag, i) => {
+          {consistencyFlags.map((flag) => {
             const colors = colorMap[flag.color] || colorMap.blue
             return (
               <AnimatedReveal key={flag.id} show={visibleFlags.includes(flag.id)} delay={0}>
