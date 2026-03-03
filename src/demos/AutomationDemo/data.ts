@@ -2,7 +2,7 @@ export const contextText = "You're preparing a consulting agreement for a new cl
 
 export const calloutText = {
   tools: "HotDocs, Gavel (advanced features), ContractExpress (now Thomson Reuters), Woodpecker (Word add-in), Documate, Afterpattern.",
-  context: "In Gavel, you built a guided interview that generates a simple document — but professional document automation handles much more: conditional sections that appear or disappear, entity-specific language, jurisdiction-specific provisions, automatic numbering that adjusts when sections are added or removed, and integration with client databases. Transactional lawyers use these daily for NDAs, engagement letters, and standard agreements."
+  context: "In Gavel, we built a guided interview that generates a simple document — but professional document automation handles much more: conditional sections that appear or disappear, entity-specific language, jurisdiction-specific provisions, automatic numbering that adjusts when sections are added or removed, and integration with client databases. Transactional lawyers use these daily for NDAs, engagement letters, and standard agreements."
 }
 
 export const clientTypes = ['Individual', 'Corporation', 'LLC'] as const
