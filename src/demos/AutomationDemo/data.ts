@@ -19,7 +19,7 @@ export const venueText: Record<string, string> = {
 }
 
 export const entityLanguage: Record<string, string> = {
-  'Individual': 'an individual residing in the State of',
+  'Individual': 'an individual residing in the State of {state},',
   'Corporation': 'a {state} corporation, with its principal place of business at _______________,',
   'LLC': 'a {state} limited liability company, with its principal place of business at _______________,',
 }
