@@ -3,6 +3,7 @@ import Gallery from './pages/Gallery'
 import MetadataDemo from './demos/MetadataDemo'
 import AutomationDemo from './demos/AutomationDemo'
 import ClauseDemo from './demos/ClauseDemo'
+import AIEditingDemo from './demos/AIEditingDemo'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/demo/metadata" element={<MetadataDemo />} />
         <Route path="/demo/automation" element={<AutomationDemo />} />
         <Route path="/demo/clause-library" element={<ClauseDemo />} />
+        <Route path="/demo/ai-editing" element={<AIEditingDemo />} />
       </Routes>
     </BrowserRouter>
   )
