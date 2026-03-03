@@ -17,8 +17,6 @@ import {
   severityConfig,
   type DepositionPage,
   type VerificationIssue,
-  type BriefClaim,
-  type SourceSuggestion,
 } from './data'
 
 // ─── Shared Source Document Viewers ──────────────────────────────────
@@ -206,7 +204,6 @@ function SourceDiscoveryTab() {
   // Render a paragraph, replacing [claim text] with interactive spans
   function renderParagraph(para: { id: string; text: string }) {
     const parts: React.ReactNode[] = []
-    let remaining = para.text
     let key = 0
 
     // Find bracketed claims in this paragraph
