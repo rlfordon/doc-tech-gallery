@@ -6,6 +6,7 @@ import ClauseDemo from './demos/ClauseDemo'
 import AIEditingDemo from './demos/AIEditingDemo'
 import ContractDemo from './demos/ContractDemo'
 import BriefDemo from './demos/BriefDemo'
+import RedactionDemo from './demos/RedactionDemo'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/demo/ai-editing" element={<AIEditingDemo />} />
         <Route path="/demo/contract-review" element={<ContractDemo />} />
         <Route path="/demo/brief-verification" element={<BriefDemo />} />
+        <Route path="/demo/redaction" element={<RedactionDemo />} />
       </Routes>
     </BrowserRouter>
   )
