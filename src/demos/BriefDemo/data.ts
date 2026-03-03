@@ -1,4 +1,4 @@
-export const contextText = "You're a senior associate reviewing a junior associate's draft motion for summary judgment. The brief cites a deposition transcript and a case. First, explore how tools can find supporting evidence from the record. Then, verify whether the brief accurately represents what the sources actually say."
+export const contextText = "You're drafting a motion for summary judgment in a hostile work environment case. First, use the source discovery tool to find and cite evidence from the record. Then, switch to the verification tab to see how a different brief — one that's already been cited — misrepresents those same sources."
 
 export const calloutText = {
   tools: "ClearBrief, Litera Check (brief analysis), Thomson Reuters Drafting Assistant.",
@@ -64,117 +64,260 @@ export const hendersonCase = {
   text: 'The court recognizes that "two or three stray remarks over the course of several months may not, standing alone, rise to the level of severe or pervasive conduct required to establish a hostile work environment claim." However, the analysis does not end there. Where such remarks are accompanied by other exclusionary conduct — such as deliberate ostracism, reassignment of duties, or a pattern of dismissive behavior — the totality of circumstances may support the claim even where individual incidents appear minor. Id. at 559.'
 }
 
-// === TAB 1: SOURCE DISCOVERY ===
+// New source: Martinez Affidavit
+export const martinezAffidavit = {
+  title: 'Declaration of Maria Martinez',
+  role: 'Coworker, Marketing Department',
+  paragraphs: [
+    {
+      num: 3,
+      text: 'I worked in the cubicle adjacent to Ms. Torres from January 2023 through December 2024. During that time, I personally witnessed comments directed at Ms. Torres regarding her political beliefs on at least four separate occasions during staff meetings.'
+    },
+    {
+      num: 4,
+      text: 'On or about March 15, 2024, during a department meeting, our supervisor Mr. Hendricks stated, in front of approximately eight employees, "I don\'t know how anyone with a brain could vote the way some people in this room did." He looked directly at Ms. Torres when he said this. Ms. Torres appeared visibly uncomfortable.'
+    },
+    {
+      num: 7,
+      text: 'After Ms. Torres reported the incidents, I observed that she was excluded from two client meetings she would normally have attended. When I asked Mr. Hendricks about this, he said Torres "needed to focus on her own work for a while."'
+    }
+  ]
+}
 
-export type MatchScore = 'strong' | 'partial' | 'contradicts'
+// New source: HR Complaint Form
+export const hrComplaint = {
+  title: 'Acme Corp. Human Resources Complaint Record',
+  caseNumber: 'HR-2024-0847',
+  filedBy: 'Elena Torres',
+  dateReceived: 'June 3, 2024',
+  entries: [
+    {
+      label: 'Nature of Complaint',
+      text: 'Hostile work environment based on political affiliation. Employee reports repeated comments about political beliefs in staff meetings, direct comments from supervisor, and subsequent exclusion from client meetings after reporting.'
+    },
+    {
+      label: 'Prior Reports',
+      text: 'Employee states she reported verbally to direct supervisor (R. Hendricks) on approximately March 20, 2024. States supervisor acknowledged complaint but no action was taken.'
+    },
+    {
+      label: 'HR Action',
+      text: 'Investigation opened June 5, 2024. Interviews conducted with reporting employee, supervisor, and three witnesses. See investigation file HR-INV-2024-0312.'
+    }
+  ]
+}
+
+// New source: Employee Handbook
+export const employeeHandbook = {
+  title: 'Acme Corp. Employee Handbook (Rev. 2023)',
+  section: 'Section 4.7 — Anti-Harassment Policy',
+  text: 'Acme Corporation is committed to providing a workplace free from harassment based on any protected characteristic, including political affiliation or belief. Employees who believe they have experienced harassment should report the conduct to their supervisor or directly to Human Resources. All complaints will be promptly investigated. Retaliation against employees who report harassment in good faith is strictly prohibited and will result in disciplinary action up to and including termination.'
+}
+
+// New legal source
+export const williamCase = {
+  title: 'Williams v. General Motors Corp., 187 F.3d 553, 563 (6th Cir. 1999)',
+  text: 'In determining whether a hostile work environment exists, courts must consider the totality of the circumstances, including "the frequency of the discriminatory conduct; its severity; whether it is physically threatening or humiliating, or a mere offensive utterance; and whether it unreasonably interferes with an employee\'s work performance." The court emphasized that "the effect on the employee\'s psychological well-being is relevant in determining whether the plaintiff actually found the environment abusive."'
+}
+
+// === TAB 1: SOURCE DISCOVERY (ClearBrief-style "Add Fact Cite") ===
 
 export interface SourceSuggestion {
+  id: string
+  sourceType: 'deposition' | 'affidavit' | 'hr-record' | 'handbook' | 'case'
   sourceLabel: string
-  sourceType: 'deposition' | 'case'
-  page?: number
-  highlightLines?: number[]
-  highlightText?: string
   excerpt: string
-  score: MatchScore
-  scoreLabel: string
-  explanation: string
+  relevance: 'high' | 'medium' | 'low'
+  citation: string
 }
 
 export interface BriefClaim {
   id: string
   text: string
-  fullSentence: string
+  claimType: 'factual' | 'legal'
   suggestions: SourceSuggestion[]
 }
 
-export const discoveryBriefText = "Plaintiff cannot establish the second element of her hostile work environment claim. During her deposition, Ms. Torres admitted that the alleged comments occurred only twice over a six-month period and that she \"Democrats just didn't feel welcomed\" in the office but \"nobody ever said anything directly to her.\" Furthermore, Ms. Torres conceded that she never reported the incidents to Human Resources despite being aware of the company's reporting procedures. Courts in this district have consistently held that isolated incidents, without more, are insufficient to establish a hostile work environment. Finally, Plaintiff's own testimony confirms that her supervisor took immediate corrective action once informed of the situation."
+export const discoveryBriefParagraphs = [
+  {
+    id: 'dp1',
+    text: 'Plaintiff Elena Torres brings this hostile work environment claim under Title VII and Ohio Rev. Code \u00A7 4112.02. Torres alleges that she was subjected to repeated derogatory comments about her political beliefs in the workplace.'
+  },
+  {
+    id: 'dp2',
+    text: 'The record shows that [comments about Torres\'s political beliefs were made on multiple occasions in staff meetings]. [At least one coworker witnessed these comments and observed their effect on Torres].'
+  },
+  {
+    id: 'dp3',
+    text: 'After Torres reported the conduct, [she was excluded from client meetings she previously attended]. Torres followed the company\'s internal reporting procedures, [filing a formal complaint with Human Resources after her supervisor failed to act].'
+  },
+  {
+    id: 'dp4',
+    text: 'To establish a hostile work environment claim, the plaintiff must show that the conduct was [sufficiently severe or pervasive to alter the conditions of employment]. Courts evaluate the totality of the circumstances, considering [the frequency, severity, and effect of the conduct on the employee].'
+  }
+]
 
 export const briefClaims: BriefClaim[] = [
   {
     id: 'claim1',
-    text: 'the alleged comments occurred only twice over a six-month period',
-    fullSentence: 'During her deposition, Ms. Torres admitted that the alleged comments occurred only twice over a six-month period.',
+    text: 'comments about Torres\'s political beliefs were made on multiple occasions in staff meetings',
+    claimType: 'factual',
     suggestions: [
       {
-        sourceLabel: 'Torres Dep. p.84:12-17',
+        id: 's1a',
         sourceType: 'deposition',
-        page: 84,
-        highlightLines: [12, 13, 14, 15, 16, 17],
-        excerpt: 'A. I remember specifically two times where it was said directly to me. But there were other times — maybe four or five more — where I overheard things said to other people, or comments were made in meetings that everyone could hear.',
-        score: 'contradicts',
-        scoreLabel: 'Contradicts assertion',
-        explanation: 'Torres said two incidents were directly to her, but described 4-5 more that were overheard or made in meetings. The brief claims "only twice" total — the source says 6-7 incidents.'
+        sourceLabel: 'Torres Dep. 84:12-17',
+        excerpt: '"I remember specifically two times where it was said directly to me. But there were other times \u2014 maybe four or five more \u2014 where I overheard things said to other people, or comments were made in meetings that everyone could hear."',
+        relevance: 'high',
+        citation: 'Torres Dep. 84:12-17'
       },
+      {
+        id: 's1b',
+        sourceType: 'affidavit',
+        sourceLabel: 'Martinez Decl. \u00B6 3',
+        excerpt: '"I personally witnessed comments directed at Ms. Torres regarding her political beliefs on at least four separate occasions during staff meetings."',
+        relevance: 'high',
+        citation: 'Martinez Decl. \u00B6 3'
+      },
+      {
+        id: 's1c',
+        sourceType: 'affidavit',
+        sourceLabel: 'Martinez Decl. \u00B6 4',
+        excerpt: '"Our supervisor Mr. Hendricks stated, in front of approximately eight employees, \'I don\'t know how anyone with a brain could vote the way some people in this room did.\' He looked directly at Ms. Torres."',
+        relevance: 'medium',
+        citation: 'Martinez Decl. \u00B6 4'
+      }
     ]
   },
   {
     id: 'claim2',
-    text: '"nobody ever said anything directly to her"',
-    fullSentence: 'Ms. Torres said "Democrats just didn\'t feel welcomed" in the office but "nobody ever said anything directly to her."',
+    text: 'At least one coworker witnessed these comments and observed their effect on Torres',
+    claimType: 'factual',
     suggestions: [
       {
-        sourceLabel: 'Torres Dep. p.84:19-22',
-        sourceType: 'deposition',
-        page: 84,
-        highlightLines: [19, 20, 21, 22],
-        excerpt: 'A. Democrats just didn\'t feel welcomed. I mean, nobody ever said anything directly to me about my voter registration or anything, but the comments in meetings made it clear.',
-        score: 'partial',
-        scoreLabel: 'Partial match — selective quotation',
-        explanation: 'The quote is real but truncated. The full quote includes "but the comments in meetings made it clear" — showing she DID experience hostile comments, just in a different form. The omitted clause reverses the meaning.'
+        id: 's2a',
+        sourceType: 'affidavit',
+        sourceLabel: 'Martinez Decl. \u00B6 4',
+        excerpt: '"He looked directly at Ms. Torres when he said this. Ms. Torres appeared visibly uncomfortable."',
+        relevance: 'high',
+        citation: 'Martinez Decl. \u00B6 4'
       },
+      {
+        id: 's2b',
+        sourceType: 'deposition',
+        sourceLabel: 'Torres Dep. 84:18-22',
+        excerpt: '"Democrats just didn\'t feel welcomed. I mean, nobody ever said anything directly to me about my voter registration or anything, but the comments in meetings made it clear."',
+        relevance: 'medium',
+        citation: 'Torres Dep. 84:18-22'
+      }
     ]
   },
   {
     id: 'claim3',
-    text: 'she never reported the incidents to Human Resources',
-    fullSentence: 'Ms. Torres conceded that she never reported the incidents to Human Resources despite being aware of the company\'s reporting procedures.',
+    text: 'she was excluded from client meetings she previously attended',
+    claimType: 'factual',
     suggestions: [
       {
-        sourceLabel: 'Torres Dep. p.112:1-8',
-        sourceType: 'deposition',
-        page: 112,
-        highlightLines: [1, 2, 3, 4, 5, 6, 7, 8],
-        excerpt: 'Q. Did you ever report these incidents to Human Resources? A. I went to my supervisor first. He said he would handle it. When it kept happening, I went to HR. They said they would look into it. Q. When did you go to HR? A. About three months after the first incident. I have the email I sent them.',
-        score: 'contradicts',
-        scoreLabel: 'Contradicts assertion',
-        explanation: 'The brief says Torres "never reported" to HR. The source says she went to her supervisor AND then went to HR, and has an email to prove it. This is factually incorrect.'
+        id: 's3a',
+        sourceType: 'affidavit',
+        sourceLabel: 'Martinez Decl. \u00B6 7',
+        excerpt: '"After Ms. Torres reported the incidents, I observed that she was excluded from two client meetings she would normally have attended. When I asked Mr. Hendricks about this, he said Torres \'needed to focus on her own work for a while.\'"',
+        relevance: 'high',
+        citation: 'Martinez Decl. \u00B6 7'
       },
+      {
+        id: 's3b',
+        sourceType: 'deposition',
+        sourceLabel: 'Torres Dep. 156:15-19',
+        excerpt: '"I don\'t know if he actually did, because the comments in meetings didn\'t really stop. They maybe got a little more subtle. Like, instead of saying things outright they would just make looks or change the subject when I walked in."',
+        relevance: 'medium',
+        citation: 'Torres Dep. 156:15-19'
+      }
     ]
   },
   {
     id: 'claim4',
-    text: 'isolated incidents, without more, are insufficient',
-    fullSentence: 'Courts in this district have consistently held that isolated incidents, without more, are insufficient to establish a hostile work environment.',
+    text: 'filing a formal complaint with Human Resources after her supervisor failed to act',
+    claimType: 'factual',
     suggestions: [
       {
-        sourceLabel: 'Henderson v. Oakwood, 142 F. Supp. 3d at 558',
-        sourceType: 'case',
-        highlightText: 'two or three stray remarks over the course of several months may not, standing alone, rise to the level of severe or pervasive conduct',
-        excerpt: '"Two or three stray remarks over the course of several months may not, standing alone, rise to the level of severe or pervasive conduct..." However, the court continues: "Where such remarks are accompanied by other exclusionary conduct — such as deliberate ostracism, reassignment of duties, or a pattern of dismissive behavior — the totality of circumstances may support the claim."',
-        score: 'partial',
-        scoreLabel: 'Partial match — omits key qualification',
-        explanation: 'Henderson supports this proposition only in part. The very next sentence says the analysis "does not end there" and lists factors (ostracism, exclusionary conduct) that may support the claim — which is what Torres describes. Citing only the first half is misleading.'
+        id: 's4a',
+        sourceType: 'hr-record',
+        sourceLabel: 'HR Complaint Record HR-2024-0847',
+        excerpt: '"Employee states she reported verbally to direct supervisor (R. Hendricks) on approximately March 20, 2024. States supervisor acknowledged complaint but no action was taken."',
+        relevance: 'high',
+        citation: 'HR Complaint Record HR-2024-0847'
       },
+      {
+        id: 's4b',
+        sourceType: 'deposition',
+        sourceLabel: 'Torres Dep. 112:3-8',
+        excerpt: '"I went to my supervisor first. He said he would handle it. When it kept happening, I went to HR. They said they would look into it... About three months after the first incident. I have the email I sent them."',
+        relevance: 'high',
+        citation: 'Torres Dep. 112:3-8'
+      },
+      {
+        id: 's4c',
+        sourceType: 'handbook',
+        sourceLabel: 'Employee Handbook \u00A7 4.7',
+        excerpt: '"Employees who believe they have experienced harassment should report the conduct to their supervisor or directly to Human Resources. All complaints will be promptly investigated."',
+        relevance: 'medium',
+        citation: 'Employee Handbook \u00A7 4.7'
+      }
     ]
   },
   {
     id: 'claim5',
-    text: 'her supervisor took immediate corrective action',
-    fullSentence: 'Plaintiff\'s own testimony confirms that her supervisor took immediate corrective action once informed of the situation.',
+    text: 'sufficiently severe or pervasive to alter the conditions of employment',
+    claimType: 'legal',
     suggestions: [
       {
-        sourceLabel: 'Torres Dep. p.156:14-19',
-        sourceType: 'deposition',
-        page: 156,
-        highlightLines: [14, 15, 16, 17, 18, 19],
-        excerpt: 'A. He said he would talk to the people involved. I don\'t know if he actually did, because the comments in meetings didn\'t really stop. They maybe got a little more subtle. Like, instead of saying things outright they would just make looks or change the subject when I walked in.',
-        score: 'contradicts',
-        scoreLabel: 'Contradicts assertion',
-        explanation: 'The brief says "immediate corrective action." The source says the supervisor said he\'d talk to people, Torres doesn\'t know if he did, and the behavior didn\'t stop — it just became more subtle. This is the opposite of effective corrective action.'
+        id: 's5a',
+        sourceType: 'case',
+        sourceLabel: 'Williams v. General Motors, 187 F.3d at 563',
+        excerpt: '"In determining whether a hostile work environment exists, courts must consider the totality of the circumstances..."',
+        relevance: 'high',
+        citation: 'Williams v. General Motors Corp., 187 F.3d 553, 563 (6th Cir. 1999)'
       },
+      {
+        id: 's5b',
+        sourceType: 'case',
+        sourceLabel: 'Henderson v. Oakwood, 142 F. Supp. 3d at 558',
+        excerpt: '"Where such remarks are accompanied by other exclusionary conduct \u2014 such as deliberate ostracism, reassignment of duties, or a pattern of dismissive behavior \u2014 the totality of circumstances may support the claim."',
+        relevance: 'high',
+        citation: 'Henderson v. Oakwood Mgmt. Corp., 142 F. Supp. 3d 547, 558 (S.D. Ohio 2015)'
+      }
+    ]
+  },
+  {
+    id: 'claim6',
+    text: 'the frequency, severity, and effect of the conduct on the employee',
+    claimType: 'legal',
+    suggestions: [
+      {
+        id: 's6a',
+        sourceType: 'case',
+        sourceLabel: 'Williams v. General Motors, 187 F.3d at 563',
+        excerpt: '"...the frequency of the discriminatory conduct; its severity; whether it is physically threatening or humiliating, or a mere offensive utterance; and whether it unreasonably interferes with an employee\'s work performance."',
+        relevance: 'high',
+        citation: 'Williams v. General Motors Corp., 187 F.3d 553, 563 (6th Cir. 1999)'
+      }
     ]
   }
 ]
+
+export const sourceTypeConfig: Record<string, { icon: string; label: string; color: string }> = {
+  'deposition': { icon: '\uD83D\uDCDC', label: 'Deposition', color: 'text-blue-600' },
+  'affidavit': { icon: '\uD83D\uDCCB', label: 'Declaration', color: 'text-purple-600' },
+  'hr-record': { icon: '\uD83D\uDCC1', label: 'HR Record', color: 'text-amber-600' },
+  'handbook': { icon: '\uD83D\uDCD6', label: 'Company Policy', color: 'text-slate-600' },
+  'case': { icon: '\u2696\uFE0F', label: 'Case Law', color: 'text-green-700' },
+}
+
+export const relevanceConfig: Record<string, { barColor: string; label: string }> = {
+  high: { barColor: 'bg-green-500', label: 'Strong match' },
+  medium: { barColor: 'bg-yellow-500', label: 'Partial match' },
+  low: { barColor: 'bg-slate-300', label: 'Weak match' },
+}
 
 // === TAB 2: FACTUAL VERIFICATION ===
 
@@ -278,8 +421,3 @@ export const verificationSummary = {
   verifiedAccurate: '0 of 4'
 }
 
-export const scoreConfig: Record<MatchScore, { label: string; color: string; bgColor: string; borderColor: string; icon: string }> = {
-  strong: { label: 'Strong support', color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-400', icon: '\u2713' },
-  partial: { label: 'Partial match', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-400', icon: '\u26A0' },
-  contradicts: { label: 'Contradicts', color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-400', icon: '\u2717' },
-}

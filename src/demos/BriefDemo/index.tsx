@@ -7,16 +7,18 @@ import {
   calloutText,
   torresDeposition,
   hendersonCase,
-  discoveryBriefText,
+  discoveryBriefParagraphs,
   briefClaims,
-  scoreConfig,
+  sourceTypeConfig,
+  relevanceConfig,
   verificationBriefParagraphs,
   verificationIssues,
   verificationSummary,
   severityConfig,
-  type MatchScore,
   type DepositionPage,
   type VerificationIssue,
+  type BriefClaim,
+  type SourceSuggestion,
 } from './data'
 
 // ─── Shared Source Document Viewers ──────────────────────────────────
@@ -160,18 +162,7 @@ function SourceTabs({
   )
 }
 
-// ─── Score / Severity Badges ─────────────────────────────────────────
-
-function ScoreBadge({ score }: { score: MatchScore }) {
-  const cfg = scoreConfig[score]
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded border ${cfg.color} ${cfg.bgColor} ${cfg.borderColor}`}
-    >
-      <span>{cfg.icon}</span> {cfg.label}
-    </span>
-  )
-}
+// ─── Severity Badge ──────────────────────────────────────────────────
 
 function SeverityBadge({ severity }: { severity: VerificationIssue['severity'] }) {
   const cfg = severityConfig[severity]
@@ -186,84 +177,133 @@ function SeverityBadge({ severity }: { severity: VerificationIssue['severity'] }
 
 // ─── Tab 1: Source Discovery ─────────────────────────────────────────
 
+const sourceLibrary = [
+  { icon: '\uD83D\uDCDC', label: 'Torres Deposition', type: 'Factual' },
+  { icon: '\uD83D\uDCCB', label: 'Martinez Declaration', type: 'Factual' },
+  { icon: '\uD83D\uDCC1', label: 'HR Complaint Record', type: 'Factual' },
+  { icon: '\uD83D\uDCD6', label: 'Employee Handbook', type: 'Factual' },
+  { icon: '\u2696\uFE0F', label: 'Henderson v. Oakwood', type: 'Legal' },
+  { icon: '\u2696\uFE0F', label: 'Williams v. General Motors', type: 'Legal' },
+]
+
 function SourceDiscoveryTab() {
   const [selectedClaim, setSelectedClaim] = useState<string | null>(null)
-  const [sourceTab, setSourceTab] = useState<'deposition' | 'case'>('deposition')
+  const [addedCitations, setAddedCitations] = useState<Record<string, string>>({})
 
   const activeClaim = briefClaims.find((c) => c.id === selectedClaim) ?? null
-  const activeSuggestion = activeClaim?.suggestions[0] ?? null
+  const allCited = briefClaims.every((c) => addedCitations[c.id])
 
-  // Build brief text with clickable highlights
-  function renderBrief() {
-    let remaining = discoveryBriefText
+  const handleAddCitation = useCallback((claimId: string, citation: string) => {
+    setAddedCitations((prev) => ({ ...prev, [claimId]: citation }))
+    setSelectedClaim(null)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setAddedCitations({})
+    setSelectedClaim(null)
+  }, [])
+
+  // Render a paragraph, replacing [claim text] with interactive spans
+  function renderParagraph(para: { id: string; text: string }) {
     const parts: React.ReactNode[] = []
+    let remaining = para.text
     let key = 0
 
-    // Sort claims by their position in the text
-    const sortedClaims = [...briefClaims].sort(
-      (a, b) => remaining.indexOf(a.text) - remaining.indexOf(b.text),
-    )
+    // Find bracketed claims in this paragraph
+    const bracketRegex = /\[([^\]]+)\]/g
+    let match: RegExpExecArray | null
+    let lastIndex = 0
 
-    for (const claim of sortedClaims) {
-      const idx = remaining.indexOf(claim.text)
-      if (idx === -1) continue
+    // Reset regex
+    bracketRegex.lastIndex = 0
 
-      if (idx > 0) {
-        parts.push(<span key={key++}>{remaining.slice(0, idx)}</span>)
+    while ((match = bracketRegex.exec(para.text)) !== null) {
+      const beforeText = para.text.slice(lastIndex, match.index)
+      if (beforeText) {
+        parts.push(<span key={key++}>{beforeText}</span>)
       }
 
-      const isSelected = selectedClaim === claim.id
-      parts.push(
-        <span
-          key={key++}
-          className={`cursor-pointer rounded transition-all ${
-            isSelected
-              ? 'bg-blue-200 ring-2 ring-blue-400'
-              : 'bg-blue-100 hover:bg-blue-200'
-          }`}
-          onClick={() => {
-            setSelectedClaim(isSelected ? null : claim.id)
-            // Auto-switch source tab
-            const sug = claim.suggestions[0]
-            if (sug) {
-              setSourceTab(sug.sourceType)
-            }
-          }}
-        >
-          {claim.text}
-        </span>,
-      )
+      const claimText = match[1]
+      const claim = briefClaims.find((c) => c.text === claimText)
 
-      remaining = remaining.slice(idx + claim.text.length)
+      if (claim) {
+        const isSelected = selectedClaim === claim.id
+        const citationAdded = addedCitations[claim.id]
+
+        if (citationAdded) {
+          // Show claim text normally + citation in green
+          parts.push(
+            <span key={key++}>
+              {claimText}
+              <span className="bg-green-100 text-green-800 rounded px-1 py-0.5 mx-0.5 text-xs font-medium">
+                {citationAdded}
+              </span>
+            </span>
+          )
+        } else {
+          // Show as clickable blue highlight
+          parts.push(
+            <span
+              key={key++}
+              className={`cursor-pointer rounded px-0.5 transition-all ${
+                isSelected
+                  ? 'bg-blue-200 ring-2 ring-blue-400'
+                  : 'bg-blue-100 hover:bg-blue-200'
+              }`}
+              onClick={() => setSelectedClaim(isSelected ? null : claim.id)}
+            >
+              {claimText}
+            </span>
+          )
+        }
+      } else {
+        // No matching claim — just show text without brackets
+        parts.push(<span key={key++}>{claimText}</span>)
+      }
+
+      lastIndex = match.index + match[0].length
     }
 
-    if (remaining) {
-      parts.push(<span key={key++}>{remaining}</span>)
+    // Remaining text after last bracket
+    const tail = para.text.slice(lastIndex)
+    if (tail) {
+      parts.push(<span key={key++}>{tail}</span>)
     }
 
     return parts
   }
 
-  // Determine highlight params for source viewer
-  const hlColor = activeSuggestion
-    ? activeSuggestion.score === 'contradicts'
-      ? 'bg-red-100'
-      : activeSuggestion.score === 'partial'
-        ? 'bg-yellow-100'
-        : 'bg-green-100'
-    : undefined
-
   return (
     <SplitPanel
       left={
         <div>
-          <h3 className="text-sm font-semibold text-slate-700 mb-2">Draft Brief</h3>
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
-            <p className="font-serif text-sm text-slate-800 leading-relaxed">
-              {renderBrief()}
-            </p>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-700">Draft Brief</h3>
+            {Object.keys(addedCitations).length > 0 && (
+              <button
+                onClick={handleReset}
+                className="text-xs text-slate-500 hover:text-slate-700 underline"
+              >
+                Reset
+              </button>
+            )}
           </div>
-          {!selectedClaim && (
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            {discoveryBriefParagraphs.map((para) => (
+              <p
+                key={para.id}
+                className="font-serif text-sm text-slate-800 leading-relaxed mb-3 last:mb-0"
+              >
+                {renderParagraph(para)}
+              </p>
+            ))}
+          </div>
+          {allCited && (
+            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 font-medium">
+              All assertions cited. Your brief is ready for review.
+            </div>
+          )}
+          {!selectedClaim && !allCited && (
             <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
               Click any highlighted claim to find supporting evidence from the record.
             </div>
@@ -273,65 +313,93 @@ function SourceDiscoveryTab() {
       right={
         <div>
           <h3 className="text-sm font-semibold text-slate-700 mb-2">
-            {selectedClaim ? 'Suggested Sources' : 'Source Documents'}
+            {activeClaim ? 'Suggestions' : 'Source Library'}
           </h3>
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4">
-            {activeClaim && activeSuggestion ? (
-              <div className="space-y-4">
-                {/* Suggestion card */}
-                <div
-                  className={`border rounded-lg p-3 ${
-                    scoreConfig[activeSuggestion.score].bgColor
-                  } ${scoreConfig[activeSuggestion.score].borderColor}`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="text-xs font-semibold text-slate-700">
-                      {activeSuggestion.sourceLabel}
-                    </span>
-                    <ScoreBadge score={activeSuggestion.score} />
-                  </div>
-                  <p className="text-xs text-slate-600 italic mb-2">
-                    &ldquo;{activeSuggestion.excerpt}&rdquo;
-                  </p>
-                  <p className="text-xs text-slate-700 font-medium">
-                    {activeSuggestion.explanation}
-                  </p>
+            {activeClaim ? (
+              <div className="space-y-3">
+                <div className="text-xs text-slate-500 mb-2">
+                  <span className="font-semibold">Suggestions for:</span>{' '}
+                  <span className="italic text-slate-700">&ldquo;{activeClaim.text}&rdquo;</span>
                 </div>
+                {activeClaim.suggestions.map((sug) => {
+                  const typeConfig = sourceTypeConfig[sug.sourceType]
+                  const relConfig = relevanceConfig[sug.relevance]
+                  const isCitedWithThis = addedCitations[activeClaim.id] === sug.citation
 
-                {/* Relevant source document */}
-                <div className="border-t border-slate-200 pt-3">
-                  <SourceTabs
-                    activeTab={sourceTab}
-                    onTabChange={setSourceTab}
-                    depositionHighlightLines={
-                      activeSuggestion.sourceType === 'deposition'
-                        ? activeSuggestion.highlightLines
-                        : undefined
-                    }
-                    depositionHighlightColor={
-                      activeSuggestion.sourceType === 'deposition' ? hlColor : undefined
-                    }
-                    caseHighlightText={
-                      activeSuggestion.sourceType === 'case'
-                        ? activeSuggestion.highlightText
-                        : undefined
-                    }
-                    caseHighlightColor={
-                      activeSuggestion.sourceType === 'case' ? hlColor : undefined
-                    }
-                    filterToPage={
-                      activeSuggestion.sourceType === 'deposition'
-                        ? activeSuggestion.page
-                        : undefined
-                    }
-                  />
-                </div>
+                  return (
+                    <div
+                      key={sug.id}
+                      className={`border rounded-lg p-3 transition-all ${
+                        isCitedWithThis
+                          ? 'bg-green-50 border-green-300'
+                          : 'bg-white border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">{typeConfig?.icon}</span>
+                          <span className={`text-xs font-semibold ${typeConfig?.color ?? 'text-slate-600'}`}>
+                            {typeConfig?.label}
+                          </span>
+                        </div>
+                        <span className="text-xs font-medium text-slate-700">
+                          {sug.sourceLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 italic mb-2 leading-relaxed">
+                        {sug.excerpt}
+                      </p>
+                      {/* Relevance bar */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${relConfig?.barColor ?? 'bg-slate-300'}`}
+                            style={{ width: sug.relevance === 'high' ? '100%' : sug.relevance === 'medium' ? '60%' : '30%' }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-500">{relConfig?.label}</span>
+                      </div>
+                      {/* Add Citation / Cited button */}
+                      {isCitedWithThis ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                          &#10003; Cited
+                        </span>
+                      ) : addedCitations[activeClaim.id] ? (
+                        <button
+                          className="text-xs text-slate-400 cursor-not-allowed"
+                          disabled
+                        >
+                          Already cited
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddCitation(activeClaim.id, sug.citation)}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded transition-colors"
+                        >
+                          Add Citation
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ) : (
-              <SourceTabs
-                activeTab={sourceTab}
-                onTabChange={setSourceTab}
-              />
+              <div className="space-y-1.5">
+                <div className="text-xs text-slate-500 mb-3">
+                  Available sources in the record:
+                </div>
+                {sourceLibrary.map((src, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-slate-700"
+                  >
+                    <span>{src.icon}</span>
+                    <span className="flex-1">{src.label}</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wide">{src.type}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
